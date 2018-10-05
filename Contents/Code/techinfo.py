@@ -5,9 +5,9 @@
 #
 # Allows you to extract some technical info about your Plex Media Server
 #
-# Author:			dane22, a Plex Community member
+# Author: dane22, a Plex Community member
 #
-# Support thread:	http://forums.plex.tv/discussion/288191
+# Support thread: https://forums.plex.tv/t/206843
 #
 ####################################################################
 
@@ -208,6 +208,39 @@ class techinfo(object):
                     String='DO NOT SHARE THIS IN ANY PUBLIC WEBSITE!!!')
                 techInfo[StringKey] = StringValue
                 techInfo['PLEXTOKEN'] = os.environ['PLEXTOKEN']
+            except:
+                pass
+            try:
+                Log.Info('PLEX_MEDIA_SERVER_INFO_VENDOR: '
+                         % os.environ['PLEX_MEDIA_SERVER_INFO_VENDOR'])
+                techInfo[
+                    'PLEX_MEDIA_SERVER_INFO_VENDOR'] = os.environ[
+                        'PLEX_MEDIA_SERVER_INFO_VENDOR']
+            except:
+                pass
+            try:
+                Log.Info('PLEX_MEDIA_SERVER_INFO_DEVICE: '
+                         % os.environ['PLEX_MEDIA_SERVER_INFO_DEVICE'])
+                techInfo[
+                    'PLEX_MEDIA_SERVER_INFO_DEVICE'] = os.environ[
+                        'PLEX_MEDIA_SERVER_INFO_DEVICE']
+            except:
+                pass
+            try:
+                Log.Info('PLEX_MEDIA_SERVER_INFO_MODEL: '
+                         % os.environ['PLEX_MEDIA_SERVER_INFO_MODEL'])
+                techInfo[
+                    'PLEX_MEDIA_SERVER_INFO_MODEL'] = os.environ[
+                        'PLEX_MEDIA_SERVER_INFO_MODEL']
+            except:
+                pass
+            try:
+                Log.Info('PLEX_MEDIA_SERVER_INFO_PLATFORM_VERSION: '
+                         % os.environ[
+                             'PLEX_MEDIA_SERVER_INFO_PLATFORM_VERSION'])
+                techInfo[
+                    'PLEX_MEDIA_SERVER_INFO_PLATFORM_VERSION'] = os.environ[
+                        'PLEX_MEDIA_SERVER_INFO_PLATFORM_VERSION']
             except:
                 pass
             Log.Info('********************** INFO End ******************')
