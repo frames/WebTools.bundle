@@ -1,9 +1,11 @@
-######################################################################################################################
-#	Plex.tv helper unit
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################################################
+# Plex.tv helper unit
 #
-#	Author: dane22, a Plex Community member
+# Author: dane22, a Plex Community member
 #
-######################################################################################################################
+##############################################################################
 import sys
 from misc import misc
 
@@ -41,7 +43,9 @@ class plexTV(object):
         try:
             global token
             token = JSON.ObjectFromURL(
-                self.loginUrl + '.json', headers=self.myHeader, method='POST')['user']['authToken']
+                self.loginUrl + '.json',
+                headers=self.myHeader,
+                method='POST')['user']['authToken']
             Log.Info('Authenticated towards plex.tv with success')
             return token
         except Ex.HTTPError, e:
@@ -51,21 +55,13 @@ class plexTV(object):
             Log.Exception('Login error: %s' % (str(e)))
             return None
 
-    ''' Is user the owner of the server?
-			user identified by token
-			server identified by clientIdentifier
-			if server found, and user is the owner, return 0
-			if server is not found, return 1
-			if user is not the owner, return 2
-			if unknown error, return -1
-	'''
-
     def isServerOwner(self, token):
         Log.Debug('Checking server for ownership')
         try:
             # Grap Resource list from plex.tv
             self.myHeader['X-Plex-Token'] = token
-            elements = XML.ElementFromURL(self.resourceURL, headers=self.myHeader).xpath(
+            elements = XML.ElementFromURL(
+                self.resourceURL, headers=self.myHeader).xpath(
                 '//Device[@clientIdentifier="' + self.id + '"]/@owned')
             if len(elements) < 1:
                 Log.Debug('Server %s was not found @ plex.tv' % (self.id))
@@ -76,45 +72,52 @@ class plexTV(object):
                     return 0
                 else:
                     Log.Debug(
-                        'Server %s was found @ plex.tv, but user is not the owner' % (self.id))
+                        'Server %s was found @ plex.tv, but user \
+                        is not the owner' % (self.id))
                     return 2
         except Ex.HTTPError, e:
             Log.Exception('Unknown exception was: %s' % (e))
             return -1
 
-    ''' will return the machineIdentity of this server '''
-
+    # will return the machineIdentity of this server
     def get_thisPMSIdentity(self):
-        return XML.ElementFromURL(misc.GetLoopBack() + '/identity').get('machineIdentifier')
+        url = misc.GetLoopBack() + '/identity'
+        return XML.ElementFromURL(url).get('machineIdentifier')
 
-    ''' Will return true, if PMS is authenticated towards plex.tv '''
-
+    # Will return true, if PMS is authenticated towards plex.tv
     def auth2myPlex(self):
-        return 'ok' == XML.ElementFromURL(misc.GetLoopBack()).get('myPlexSigninState')
+        return 'ok' == XML.ElementFromURL(
+                                        misc.GetLoopBack()).get(
+                                            'myPlexSigninState')
 
-    ''' Get list of users 
-	This will return a json of users on the server, incl. their access token
-	'''
-
+    # Get list of users
+    # This will return a json of users on the server, incl. their access token
     def getUserList(self):
         try:
             # Fetch resources from plex.tv
             self.myHeader['X-Plex-Token'] = token
-            users = XML.ElementFromURL(self.userURL, headers=self.myHeader)
+            users = XML.ElementFromURL(
+                self.userURL,
+                headers=self.myHeader)
             sharedUsers = XML.ElementFromURL(
-                self.sharedServersURL, headers=self.myHeader)
+                self.sharedServersURL,
+                headers=self.myHeader)
             usrList = {}
             for user in users:
                 # Get servers for user
                 servers = user.xpath('//Server')
                 for server in servers:
                     if server.get('machineIdentifier') == self.id:
-                        if len(sharedUsers.xpath('//SharedServer[@userID=' + user.get('id') + ']/@accessToken')) > 0:
-                            #							usr = user.get('title')
+                        if len(sharedUsers.xpath(
+                            ''.join((
+                                '//SharedServer[@userID=',
+                                user.get('id'),
+                                ']/@accessToken')))) > 0:
                             usr = user.get('id')
                             usrList[usr] = {}
                             usrList[usr]['title'] = user.get('title')
-                            usrList[usr]['recommendationsPlaylistId'] = user.get(
+                            usrList[usr][
+                                'recommendationsPlaylistId'] = user.get(
                                 'recommendationsPlaylistId')
                             usrList[usr]['thumb'] = user.get('thumb')
                             usrList[usr]['protected'] = user.get('protected')
@@ -133,33 +136,39 @@ class plexTV(object):
                                 'filterPhotos')
                             usrList[usr]['filterTelevision'] = user.get(
                                 'filterTelevision')
+                            strCommonPath = ''.join((
+                                '//SharedServer[@userID=',
+                                user.get('id')))
                             usrList[usr]['restricted'] = user.get('restricted')
-                            usrList[usr]['accessToken'] = sharedUsers.xpath(
-                                '//SharedServer[@userID=' + user.get('id') + ']/@accessToken')[0]
+                            usrList[usr][
+                                'accessToken'] = sharedUsers.xpath(
+                                    strCommonPath + ']/@accessToken')[0]
                             usrList[usr]['username'] = sharedUsers.xpath(
-                                '//SharedServer[@userID=' + user.get('id') + ']/@username')[0]
+                                strCommonPath + ']/@username')[0]
                             if usrList[usr]['username'] == '':
                                 usrList[usr]['username'] = user.get('title')
                             usrList[usr]['email'] = sharedUsers.xpath(
-                                '//SharedServer[@userID=' + user.get('id') + ']/@email')[0]
-                            usrList[usr]['acceptedAt'] = sharedUsers.xpath(
-                                '//SharedServer[@userID=' + user.get('id') + ']/@acceptedAt')[0]
-                            usrList[usr]['invitedAt'] = sharedUsers.xpath(
-                                '//SharedServer[@userID=' + user.get('id') + ']/@invitedAt')[0]
+                                strCommonPath + ']/@email')[0]
+                            usrList[usr][
+                                'acceptedAt'] = sharedUsers.xpath(
+                                    strCommonPath + ']/@acceptedAt')[0]
+                            usrList[usr][
+                                'invitedAt'] = sharedUsers.xpath(
+                                    strCommonPath + ']/@invitedAt')[0]
                             # Get shares for the user
                             shares = sharedUsers.xpath(
-                                '//SharedServer[@userID=' + user.get('id') + ']/Section')
+                                strCommonPath + ']/Section')
                             usrShared = {}
                             for share in shares:
                                 usrShared[share.get('id')] = {}
                                 usrShared[share.get(
                                     'id')]['key'] = share.get('key')
-                                usrShared[share.get('id')]['title'] = share.get(
-                                    'title')
+                                usrShared[share.get('id')][
+                                    'title'] = share.get('title')
                                 usrShared[share.get('id')]['type'] = share.get(
                                     'type')
-                                usrShared[share.get('id')]['shared'] = share.get(
-                                    'shared')
+                                usrShared[share.get('id')][
+                                    'shared'] = share.get('shared')
                             usrList[usr]['shared'] = usrShared
             return usrList
         except Exception, e:

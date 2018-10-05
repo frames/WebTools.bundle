@@ -1,16 +1,16 @@
-'''
-##############################################################################################
-#	WebTools module unit
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################################################
+# WebTools module unit
 #
-#	Author: dane22, a Plex Community member
+# Author: dane22, a Plex Community member
 #
-# 	Handles calles to the API V3
+# Handles calles to the API V3
 #
-##############################################################################################
-'''
+##############################################################################
 
 from tornado.web import *
-from consts import DEBUGMODE, WT_AUTH, VERSION, NAME, V3MODULES
+from Code.consts import DEBUGMODE, WT_AUTH, VERSION, NAME, V3MODULES
 import sys
 
 import wtV3
@@ -24,20 +24,23 @@ import jsonExporterV3
 import playlistsV3
 import techinfo
 import viewstate
+import changeagent
+
 
 class BaseHandler(RequestHandler):
     def get_current_user(self):
+        """Returns the Cookie of the logged in user"""
         return self.get_secure_cookie(NAME)
-
-# API V3
 
 
 class apiv3(BaseHandler):
+
+    """This is the class for API V3"""
     module = None
     function = None
 
-    # Disable auth when debug, and get module
     def prepare(self):
+        """Disable auth when debug, and get module"""
         # Set Default header
         self.set_header('Cache-Control',
                         'no-store, no-cache, must-revalidate, max-age=0')
@@ -52,7 +55,8 @@ class apiv3(BaseHandler):
         if DEBUGMODE:
             if not WT_AUTH:
                 self.set_secure_cookie(NAME, Hash.MD5(
-                    Dict['SharedSecret'] + Dict['password']), expires_days=None)
+                    Dict['SharedSecret'] + Dict['password']),
+                    expires_days=None)
         # No valid module found?
         if not self.module:
             self.clear()
@@ -66,50 +70,70 @@ class apiv3(BaseHandler):
                   self.module + ' for method: ' + self.request.method)
         # Generate a handle to the class
         try:
-            myClass = getattr(pmsV3, V3MODULES[self.module])
-        except:
-            try:
-                myClass = getattr(wtV3, V3MODULES[self.module])
-            except:
-                try:
-                    myClass = getattr(logsV3, V3MODULES[self.module])
-                except:
-                    try:
-                        myClass = getattr(languageV3, V3MODULES[self.module])
-                    except:
-                        try:
-                            myClass = getattr(
-                                settingsV3, V3MODULES[self.module])
-                        except:
-                            try:
-                                myClass = getattr(
-                                    gitV3, V3MODULES[self.module])
-                            except:
-                                try:
-                                    myClass = getattr(
-                                        findMediaV3, V3MODULES[self.module])
-                                except:
-                                    try:
-                                        myClass = getattr(
-                                            jsonExporterV3, V3MODULES[self.module])
-                                    except:
-                                        try:
-                                            myClass = getattr(
-                                                playlistsV3, V3MODULES[self.module])
-                                        except:
-                                            try:
-                                                myClass = getattr(
-                                                    techinfo, V3MODULES[self.module])
-                                            except:
-                                                try:
-                                                    myClass = getattr(
-                                                        viewstate, V3MODULES[self.module])                                                    
-                                                except Exception, e:
-                                                    Log.Exception(
-                                                        'Exception getting the class in apiV3: %s' % str(e))
-                                                    self.clear()
-                                                    self.set_status(501)
-                                                    self.finish('Bad module?')
+            if self.module == 'PMS':
+                myClass = getattr(
+                    pmsV3,
+                    V3MODULES[self.module])
+            elif self.module == 'WT':
+                myClass = getattr(
+                    wtV3,
+                    V3MODULES[self.module])
+            elif self.module == 'LOGS':
+                myClass = getattr(
+                    logsV3,
+                    V3MODULES[self.module])
+            elif self.module == 'LANGUAGE':
+                myClass = getattr(
+                    languageV3,
+                    V3MODULES[self.module])
+            elif self.module == 'SETTINGS':
+                myClass = getattr(
+                    settingsV3,
+                    V3MODULES[self.module])
+            elif self.module == 'GIT':
+                myClass = getattr(
+                    gitV3,
+                    V3MODULES[self.module])
+            elif self.module == 'FINDMEDIA':
+                myClass = getattr(
+                    findMediaV3,
+                    V3MODULES[self.module])
+            elif self.module == 'JSONEXPORTER':
+                myClass = getattr(
+                    jsonExporterV3,
+                    V3MODULES[self.module])
+            elif self.module == 'PLAYLISTS':
+                myClass = getattr(
+                    playlistsV3,
+                    V3MODULES[self.module])
+            elif self.module == 'TECHINFO':
+                myClass = getattr(
+                    techinfo,
+                    V3MODULES[self.module])
+            elif self.module == 'VIEWSTATE':
+                myClass = getattr(
+                    viewstate,
+                    V3MODULES[self.module])
+            elif self.module == 'CHANGEAGENT':
+                myClass = getattr(
+                    changeagent,
+                    V3MODULES[self.module])
+            else:
+                Log.Exception(
+                    'Exception getting the \
+                    class in apiV3: %s'
+                    % str(e))
+                self.clear()
+                self.set_status(501)
+                self.finish('Bad module?')
+        except Exception, e:
+            Log.Exception(
+                'Exception getting the \
+                class in apiV3: %s'
+                % str(e))
+            self.clear()
+            self.set_status(501)
+            self.finish('Bad module?')
         try:
             # Make the call
             getattr(myClass, 'getFunction')(self.request.method.lower(), self)
